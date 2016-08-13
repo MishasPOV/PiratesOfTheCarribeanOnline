@@ -486,51 +486,47 @@ class PiratesClientRepository(OTPClientRepository):
         'args',
         'deltaStamp'], dConfigParam = 'teleport')(handleGetAvatarsResp2Msg)
 
-    def handleAvatarResponseMsg(self, di):
+    def handleAvatarResponseMsg(self, doId, di):
         self.loadingScreen.endStep('waitForAv')
         self.cleanupWaitingForDatabase()
-        avatarId = di.getUint32()
-        returnCode = di.getUint8()
-        if returnCode == 0:
-            dclass = self.dclassesByName['DistributedPlayerPirate']
-            NametagGlobals.setMasterArrowsOn(0)
-            self.loadingScreen.show(waitForLocation = True, expectedLoadScale = 4)
-            self.loadingScreen.beginStep('LocalAvatar', 36, 120)
-            localAvatar = LocalPirate(self)
-            localAvatar.dclass = dclass
-            if __dev__:
-                __builtins__['lu'] = self.getDo
-
-            localAvatar.doId = avatarId
-            self.localAvatarDoId = avatarId
-            self.doId2do[avatarId] = localAvatar
-            parentId = None
-            zoneId = None
-            localAvatar.setLocation(parentId, zoneId)
-            localAvatar.generate()
-            localAvatar.updateAllRequiredFields(dclass, di)
-            locUID = localAvatar.getReturnLocation()
-            if __dev__ and not getBase().config.GetBool('login-location-used-pcr', False):
-                bp.loginCfg()
-                ConfigVariableBool('login-location-used-pcr').setValue(True)
-                config_location = getBase().config.GetString('login-location', '').lower()
-                config_location_uid = PLocalizer.LocationUids.get(config_location)
-                if config_location and config_location_uid:
-                    locUID = config_location_uid
-                    localAvatar.setReturnLocation(locUID)
-
-
-            if locUID:
-                self.loadingScreen.showTarget(locUID)
-                self.loadingScreen.showHint(locUID)
-            else:
-                locUID = '1150922126.8dzlu'
+        dclassId = di.getUint16()
+        dclass = self.dclassesByName['DistributedPlayerPirate']
+        NametagGlobals.setMasterArrowsOn(0)
+        self.loadingScreen.show(waitForLocation = True, expectedLoadScale = 4)
+        self.loadingScreen.beginStep('LocalAvatar', 36, 120)
+        localAvatar = LocalPirate(self)
+        localAvatar.dclass = dclass
+        if __dev__:
+             __builtins__['lu'] = self.getDo
+        __builtins__['localAvatar'] = localAvatar
+        localAvatar.doId = doId
+        self.localAvatarDoId = doId
+        self.doId2do[doId] = localAvatar
+        parentId = di.getUint32()
+        zoneId = di.getUint32()
+        localAvatar.setLocation(parentId, zoneId)
+        localAvatar.generate()
+        localAvatar.updateAllRequiredFields(dclass, di)
+        locUID = localAvatar.getReturnLocation()
+        if __dev__ and not getBase().config.GetBool('login-location-used-pcr', False):
+            bp.loginCfg()
+            ConfigVariableBool('login-location-used-pcr').setValue(True)
+            config_location = getBase().config.GetString('login-location', '').lower()
+            config_location_uid = PLocalizer.LocationUids.get(config_location)
+            if config_location and config_location_uid:
+                locUID = config_location_uid
                 localAvatar.setReturnLocation(locUID)
-                self.loadingScreen.showTarget(jail = True)
-            self.loadingScreen.endStep('LocalAvatar')
-            self.loginFSM.request('playingGame')
+
+
+        if locUID:
+            self.loadingScreen.showTarget(locUID)
+            self.loadingScreen.showHint(locUID)
         else:
-            self.notify.error('Bad avatar: return code %d' % returnCode)
+            locUID = '1150922126.8dzlu'
+            localAvatar.setReturnLocation(locUID)
+            self.loadingScreen.showTarget(jail = True)
+        self.loadingScreen.endStep('LocalAvatar')
+        self.loginFSM.request('playingGame')
 
     handleAvatarResponseMsg = report(types = [
         'args',

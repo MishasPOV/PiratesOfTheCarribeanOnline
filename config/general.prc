@@ -9,6 +9,8 @@ model-path resources/phase_5
 
 default-model-extension .bam
 
+language English
+
 dc-file astron/dclass/pirates.dc
 dc-file astron/dclass/otp.dc
 
